@@ -1,6 +1,8 @@
 const express = require("express");
 const { createKorCore } = require("../core");
 const logger = require("../core/logger");
+const { createMonitorStore } = require("./monitorStore");
+const { renderMonitorPage } = require("./monitorPage");
 
 async function startServer() {
   const kor = createKorCore(process.cwd());
@@ -9,8 +11,61 @@ async function startServer() {
 
   const app = express();
   const port = Number(process.env.AI_AGENT_API_PORT || 3000);
+  const monitor = createMonitorStore();
 
   app.use(express.json({ limit: "2mb" }));
+  app.use((req, res, next) => {
+    if (req.path === "/" || req.path === "/__monitor/events" || req.path.startsWith("/favicon")) {
+      next();
+      return;
+    }
+
+    const startedAt = Date.now();
+    let responseBody;
+    const originalJson = res.json.bind(res);
+    const originalSend = res.send.bind(res);
+
+    res.json = function patchedJson(body) {
+      responseBody = body;
+      return originalJson(body);
+    };
+
+    res.send = function patchedSend(body) {
+      responseBody = typeof responseBody === "undefined" ? body : responseBody;
+      return originalSend(body);
+    };
+
+    res.on("finish", () => {
+      monitor.pushEvent({
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: Date.now() - startedAt,
+        createdAt: new Date().toLocaleTimeString("pt-BR"),
+        requestBody: req.body,
+        responseBody
+      });
+    });
+
+    next();
+  });
+
+  app.get("/", (_req, res) => {
+    res.type("html").send(renderMonitorPage(port));
+  });
+
+  app.get("/__monitor/events", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    monitor.addClient(res);
+
+    req.on("close", () => {
+      monitor.removeClient(res);
+    });
+  });
 
   app.get("/health", async (_req, res) => {
     const active = await kor.ensureActiveChat();
@@ -122,6 +177,7 @@ async function startServer() {
 
   app.listen(port, () => {
     logger.info(`API do agente disponivel em http://localhost:${port}`);
+    logger.info(`Monitor local disponivel em http://localhost:${port}/`);
   });
 }
 
