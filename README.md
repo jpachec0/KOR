@@ -2,6 +2,11 @@
 
 Agente local de programacao em Node.js com chats persistentes, memoria contextual, indexacao de projeto, selecao heuristica de arquivos e integracao com OpenAI, OpenRouter e Hugging Face.
 
+O projeto agora tem duas interfaces complementares:
+
+- CLI local em terminal
+- Extensao do VS Code com chat visual estilo assistant
+
 ## O que este projeto entrega
 
 - Multiplos chats persistidos em `.ai-agent/chats/{chatId}`
@@ -14,6 +19,8 @@ Agente local de programacao em Node.js com chats persistentes, memoria contextua
 - Proposta de alteracoes em arquivos com visualizacao de diff antes de aplicar
 - Cache simples de respostas para melhorar performance
 - Estrutura preparada para embeddings futuros
+- API HTTP fina para integrar interfaces visuais sem duplicar a logica do agente
+- Extensao do VS Code em `vscode-extension/` com multiplos chats, markdown renderizado e Apply no editor
 
 ## Estrutura
 
@@ -25,6 +32,8 @@ Agente local de programacao em Node.js com chats persistentes, memoria contextua
 cli/
 config/
 core/
+server/
+vscode-extension/
 ```
 
 ## Requisitos
@@ -61,6 +70,8 @@ Providers suportados:
 
 ## Uso
 
+### Terminal
+
 Inicie a CLI:
 
 ```bash
@@ -85,6 +96,54 @@ Comandos:
 - `apply`
 - `exit`
 
+### Backend HTTP para o VS Code
+
+Inicie a API:
+
+```bash
+npm run api
+```
+
+Por padrao ela sobe em `http://localhost:3000`.
+
+Endpoints usados pela extensao:
+
+- `GET /health`
+- `GET /api/state`
+- `POST /api/chats`
+- `POST /api/chats/:chatId/activate`
+- `POST /api/chats/:chatId/ask`
+- `GET /api/chats/:chatId/pending`
+- `POST /api/chats/:chatId/pending/clear`
+
+### Extensao do VS Code
+
+Instale as dependencias da extensao:
+
+```bash
+cd vscode-extension
+npm install
+npm run build
+```
+
+Depois:
+
+1. Abra a pasta `vscode-extension` no VS Code.
+2. Pressione `F5` para iniciar a Extension Development Host.
+3. Na instancia de testes, abra a pasta do projeto que voce quer usar com o agente.
+4. Garanta que o backend HTTP esteja rodando com `npm run api` na raiz do projeto.
+
+Configuracao da extensao:
+
+- Setting: `korAgent.backendUrl`
+- Valor padrao: `http://localhost:3000`
+
+Comandos disponiveis no VS Code:
+
+- `AI: Open Chat`
+- `AI: Ask Selection`
+- `AI: New Chat`
+
 ## Fluxo de trabalho
 
 1. O sistema garante a estrutura de runtime em `.ai-agent/`.
@@ -101,6 +160,7 @@ Comandos:
    - `proposedChanges`
 5. O agente converte `proposedChanges` em diff local e exibe antes de aplicar.
 6. O comando `apply` grava as mudancas apenas apos sua confirmacao explicita.
+7. Na extensao, o botao `Apply` usa a API do VS Code para escrever os arquivos no editor e depois limpa o estado pendente no backend.
 
 ## Persistencia de chat
 
@@ -117,6 +177,7 @@ Cada chat fica em `.ai-agent/chats/{chatId}/` com:
 - O agente nunca aplica alteracoes automaticamente
 - Todos os caminhos sao validados para permanecer dentro do projeto
 - O sistema nao executa comandos arbitrarios a pedido da IA
+- A extensao do VS Code pede confirmacao explicita do usuario ao clicar em `Apply`; nenhuma mudanca e aplicada so por receber a resposta da IA
 
 ## Extensoes futuras
 
@@ -128,3 +189,4 @@ Cada chat fica em `.ai-agent/chats/{chatId}/` com:
 
 - O conteudo dos arquivos nao fica congelado no historico: ele e sempre relido do disco no momento do `ask`
 - O projeto esta pronto para uso, faltando apenas configurar a chave de API
+- A CLI continua funcionando do mesmo jeito; a extensao apenas consome a API HTTP que reaproveita o mesmo backend
