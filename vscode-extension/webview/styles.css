@@ -1,0 +1,360 @@
+:root {
+  color-scheme: dark light;
+  --bg: var(--vscode-sideBar-background);
+  --panel: color-mix(in srgb, var(--vscode-editor-background) 88%, white 4%);
+  --panel-strong: color-mix(in srgb, var(--vscode-editor-background) 82%, black 10%);
+  --muted: var(--vscode-descriptionForeground);
+  --text: var(--vscode-foreground);
+  --accent: var(--vscode-button-background);
+  --accent-hover: var(--vscode-button-hoverBackground);
+  --border: color-mix(in srgb, var(--vscode-panel-border) 70%, transparent);
+  --user: color-mix(in srgb, var(--vscode-button-background) 22%, transparent);
+  --assistant: color-mix(in srgb, var(--vscode-editorWidget-background) 88%, white 3%);
+  --danger: var(--vscode-errorForeground);
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--accent) 18%, transparent), transparent 34%), var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--vscode-font-family);
+}
+
+button, textarea {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+#app, .shell {
+  height: 100%;
+}
+
+.shell {
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr auto;
+  gap: 10px;
+  padding: 12px;
+}
+
+.topbar, .chat-strip, .context-bar, .pending-panel, .composer-box {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 40%, black 18%));
+  color: white;
+  font-weight: 700;
+}
+
+.brand-title {
+  font-weight: 700;
+}
+
+.status-pill {
+  font-size: 11px;
+  color: #4ac26b;
+}
+
+.status-pill.offline {
+  color: #ff8181;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.primary-button,
+.ghost-button,
+.send-button,
+.chat-item {
+  border-radius: 8px;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.primary-button,
+.send-button {
+  background: var(--accent);
+  color: var(--vscode-button-foreground);
+  padding: 8px 12px;
+}
+
+.primary-button:hover,
+.send-button:hover {
+  background: var(--accent-hover);
+}
+
+.ghost-button {
+  background: transparent;
+  color: var(--text);
+  padding: 8px 12px;
+}
+
+.ghost-button:hover {
+  background: color-mix(in srgb, var(--panel-strong) 84%, white 4%);
+}
+
+.chat-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px;
+}
+
+.chat-item {
+  min-width: 132px;
+  max-width: 180px;
+  padding: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.chat-item.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+}
+
+.chat-name,
+.pending-path {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-date {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  min-height: 42px;
+}
+
+.context-chip,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-strong) 76%, white 3%);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pending-panel {
+  padding: 10px;
+}
+
+.pending-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pending-header span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pending-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pending-item {
+  padding: 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-strong) 90%, transparent);
+}
+
+.pending-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.pending-reason {
+  color: var(--muted);
+}
+
+.messages {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.message {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.message.user {
+  background: var(--user);
+}
+
+.message.assistant {
+  background: var(--assistant);
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.message-body {
+  overflow-wrap: anywhere;
+}
+
+.message-body p {
+  margin: 0 0 10px;
+}
+
+.message-body p:last-child {
+  margin-bottom: 0;
+}
+
+.message-body pre {
+  margin: 10px 0 0;
+  overflow-x: auto;
+}
+
+.code-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-strong) 92%, black 2%);
+}
+
+.code-head {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.code-block code {
+  display: block;
+  padding: 12px;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 12px;
+}
+
+.composer {
+  position: sticky;
+  bottom: 0;
+}
+
+.busy-line,
+.error-line {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.error-line {
+  color: var(--danger);
+}
+
+.composer-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+}
+
+textarea {
+  min-height: 88px;
+  max-height: 220px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-strong) 88%, white 2%);
+  color: var(--text);
+  padding: 12px;
+}
+
+.send-button {
+  align-self: end;
+  min-width: 82px;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 220px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  padding: 20px;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.empty-state p {
+  margin: 0;
+}

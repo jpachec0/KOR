@@ -1,0 +1,80 @@
+{
+  "name": "kor-local-agent-vscode",
+  "displayName": "KOR Local Agent",
+  "description": "Interface moderna do agente local KOR no Visual Studio Code.",
+  "version": "1.0.0",
+  "publisher": "jpachec0",
+  "engines": {
+    "vscode": "^1.88.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:korAgent.chatView",
+    "onCommand:korAgent.openChat",
+    "onCommand:korAgent.askSelection",
+    "onCommand:korAgent.newChat"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "KOR Local Agent",
+      "properties": {
+        "korAgent.backendUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL base da API HTTP do agente local."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "korAgent",
+          "title": "KOR AI",
+          "icon": "resources/k.svg"
+        }
+      ]
+    },
+    "views": {
+      "korAgent": [
+        {
+          "id": "korAgent.chatView",
+          "name": "Agent Chat",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "korAgent.openChat",
+        "title": "AI: Open Chat"
+      },
+      {
+        "command": "korAgent.askSelection",
+        "title": "AI: Ask Selection"
+      },
+      {
+        "command": "korAgent.newChat",
+        "title": "AI: New Chat"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json",
+    "watch": "tsc -w -p ./tsconfig.json",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "highlight.js": "^11.11.1",
+    "marked": "^15.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/vscode": "^1.88.0",
+    "@vscode/vsce": "^3.3.2",
+    "typescript": "^5.8.3"
+  }
+}
