@@ -1,4 +1,3 @@
-const fs = require("fs-extra");
 const {
   appendMessage,
   readHistory,
@@ -25,25 +24,28 @@ const {
   getCachedResponse,
   setCachedResponse
 } = require("./responseCache");
-const { ROOT_DIR } = require("./constants");
+const { createRuntimeContext } = require("./runtimeContext");
+const { buildQuestionWithEditorContext } = require("./editorContext");
 
-async function askAgent(chatId, question) {
-  const providerConfig = await loadAiConfig();
-  await appendMessage(chatId, { role: "user", content: question });
+async function askAgent(chatId, question, options = {}) {
+  const runtime = options.runtime || createRuntimeContext();
+  const enrichedQuestion = buildQuestionWithEditorContext(question, options.editorContext);
+  const providerConfig = await loadAiConfig(runtime);
+  await appendMessage(chatId, { role: "user", content: enrichedQuestion }, runtime);
 
   const [history, context, trackedFiles, projectIndex] = await Promise.all([
-    readHistory(chatId),
-    readContext(chatId),
-    readTrackedFiles(chatId),
-    buildProjectIndex()
+    readHistory(chatId, runtime),
+    readContext(chatId, runtime),
+    readTrackedFiles(chatId, runtime),
+    buildProjectIndex(runtime)
   ]);
 
-  const relevantFiles = selectRelevantFiles(question, projectIndex, trackedFiles.trackedFiles || []);
-  const fileBundle = await loadFilesForPrompt(relevantFiles);
+  const relevantFiles = selectRelevantFiles(enrichedQuestion, projectIndex, trackedFiles.trackedFiles || []);
+  const fileBundle = await loadFilesForPrompt(relevantFiles, runtime);
   const recentMessages = getRecentMessages(history);
   const computedSummary = buildContextSummary(history, context.summary);
   const prompt = buildPrompt({
-    question,
+    question: enrichedQuestion,
     projectIndex,
     contextSummary: context.summary || computedSummary,
     recentMessages,
@@ -64,12 +66,12 @@ async function askAgent(chatId, question) {
     }))
   });
 
-  let normalizedResponse = await getCachedResponse(cacheKey);
+  let normalizedResponse = await getCachedResponse(cacheKey, runtime);
 
   if (!normalizedResponse) {
     const rawResponse = await askModel(providerConfig, prompt);
     normalizedResponse = normalizeAiResponse(rawResponse);
-    await setCachedResponse(cacheKey, normalizedResponse);
+    await setCachedResponse(cacheKey, normalizedResponse, runtime);
   }
 
   const mergedTrackedFiles = [
@@ -78,23 +80,23 @@ async function askAgent(chatId, question) {
     ...normalizedResponse.relevantFiles
   ];
 
-  await updateTrackedFiles(chatId, mergedTrackedFiles);
+  await updateTrackedFiles(chatId, mergedTrackedFiles, runtime);
   await writeContext(chatId, {
     summary: normalizedResponse.summary || computedSummary,
     lastSummarizedAt: new Date().toISOString()
-  });
+  }, runtime);
 
-  const diffPreview = await buildDiffPreview(normalizedResponse.proposedChanges);
+  const diffPreview = await buildDiffPreview(normalizedResponse.proposedChanges, runtime);
   await writePendingChanges(chatId, {
     changes: normalizedResponse.proposedChanges,
     diffPreview,
-    projectRoot: ROOT_DIR
-  });
+    projectRoot: runtime.rootDir
+  }, runtime);
 
   await appendMessage(chatId, {
     role: "assistant",
     content: normalizedResponse.answer
-  });
+  }, runtime);
 
   return {
     answer: normalizedResponse.answer,
@@ -104,8 +106,9 @@ async function askAgent(chatId, question) {
   };
 }
 
-async function applyPendingChanges(chatId) {
-  const pending = await readPendingChanges(chatId);
+async function applyPendingChanges(chatId, options = {}) {
+  const runtime = options.runtime || createRuntimeContext();
+  const pending = await readPendingChanges(chatId, runtime);
   if (!pending.changes || !pending.changes.length) {
     return {
       applied: false,
@@ -113,12 +116,12 @@ async function applyPendingChanges(chatId) {
     };
   }
 
-  await applyChanges(pending.changes);
+  await applyChanges(pending.changes, runtime);
   await writePendingChanges(chatId, {
     changes: [],
     diffPreview: [],
-    projectRoot: ROOT_DIR
-  });
+    projectRoot: runtime.rootDir
+  }, runtime);
 
   return {
     applied: true,
@@ -126,8 +129,9 @@ async function applyPendingChanges(chatId) {
   };
 }
 
-async function getPendingChanges(chatId) {
-  const pending = await readPendingChanges(chatId);
+async function getPendingChanges(chatId, options = {}) {
+  const runtime = options.runtime || createRuntimeContext();
+  const pending = await readPendingChanges(chatId, runtime);
   return pending.diffPreview || [];
 }
 

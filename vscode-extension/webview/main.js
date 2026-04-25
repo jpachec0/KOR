@@ -104,7 +104,7 @@
             <div class="brand-mark">K</div>
             <div>
               <div class="brand-title">KOR Local Agent</div>
-              <div class="${connectionClass}">${state.connected ? "Backend conectado" : "Backend offline"}</div>
+              <div class="${connectionClass}">${state.connected ? "Workspace conectado" : "Abra uma pasta no VS Code"}</div>
             </div>
           </div>
           <div class="topbar-actions">
@@ -199,7 +199,7 @@
     if (message.type === "connection") {
       state.connected = message.connected;
       if (!message.connected) {
-        state.error = "Inicie o backend com npm run api";
+        state.error = "Abra uma pasta do projeto no VS Code para usar o agente.";
       }
       render();
     }

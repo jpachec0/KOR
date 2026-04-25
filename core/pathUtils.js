@@ -1,13 +1,13 @@
 const path = require("path");
-const { ROOT_DIR } = require("./constants");
+const { createRuntimeContext } = require("./runtimeContext");
 
-function toRelative(projectPath) {
-  return path.relative(ROOT_DIR, projectPath).replace(/\\/g, "/");
+function toRelative(projectPath, runtime = createRuntimeContext()) {
+  return path.relative(runtime.rootDir, projectPath).replace(/\\/g, "/");
 }
 
-function resolveWithinRoot(targetPath) {
-  const resolved = path.resolve(ROOT_DIR, targetPath);
-  const relative = path.relative(ROOT_DIR, resolved);
+function resolveWithinRoot(targetPath, runtime = createRuntimeContext()) {
+  const resolved = path.resolve(runtime.rootDir, targetPath);
+  const relative = path.relative(runtime.rootDir, resolved);
 
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error(`Caminho fora do projeto: ${targetPath}`);

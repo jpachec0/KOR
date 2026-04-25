@@ -1,12 +1,12 @@
 const fs = require("fs-extra");
-const { AI_CONFIG_FILE } = require("./constants");
+const { createRuntimeContext } = require("./runtimeContext");
 
-async function loadAiConfig() {
-  if (!(await fs.pathExists(AI_CONFIG_FILE))) {
-    throw new Error(`Arquivo de configuracao nao encontrado em ${AI_CONFIG_FILE}`);
+async function loadAiConfig(runtime = createRuntimeContext()) {
+  if (!(await fs.pathExists(runtime.aiConfigFile))) {
+    throw new Error(`Arquivo de configuracao nao encontrado em ${runtime.aiConfigFile}`);
   }
 
-  const config = await fs.readJson(AI_CONFIG_FILE);
+  const config = await fs.readJson(runtime.aiConfigFile);
 
   if (!config.provider) {
     throw new Error("config/ai.json precisa informar o provider.");

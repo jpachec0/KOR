@@ -2,9 +2,10 @@ const fs = require("fs-extra");
 const path = require("path");
 const { createTwoFilesPatch } = require("diff");
 const { resolveWithinRoot } = require("./pathUtils");
+const { createRuntimeContext } = require("./runtimeContext");
 
-async function buildDiff(change) {
-  const absolutePath = resolveWithinRoot(change.path);
+async function buildDiff(change, runtime = createRuntimeContext()) {
+  const absolutePath = resolveWithinRoot(change.path, runtime);
   const exists = await fs.pathExists(absolutePath);
   const oldContent = exists ? await fs.readFile(absolutePath, "utf8") : "";
   const newContent = change.action === "delete" ? "" : change.content;
@@ -14,22 +15,22 @@ async function buildDiff(change) {
   return createTwoFilesPatch(oldLabel, newLabel, oldContent, newContent, "", "");
 }
 
-async function buildDiffPreview(changes) {
+async function buildDiffPreview(changes, runtime = createRuntimeContext()) {
   const previews = [];
   for (const change of changes) {
     previews.push({
       path: change.path,
       action: change.action,
       reason: change.reason,
-      diff: await buildDiff(change)
+      diff: await buildDiff(change, runtime)
     });
   }
   return previews;
 }
 
-async function applyChanges(changes) {
+async function applyChanges(changes, runtime = createRuntimeContext()) {
   for (const change of changes) {
-    const absolutePath = resolveWithinRoot(change.path);
+    const absolutePath = resolveWithinRoot(change.path, runtime);
 
     if (change.action === "delete") {
       if (await fs.pathExists(absolutePath)) {

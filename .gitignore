@@ -7,6 +7,7 @@
 .ai-agent/session.json
 .ai-agent/cache.json
 node_modules/
+vscode-extension/node_modules/
 npm-debug.log*
 .codex
 vscode-extension/out/

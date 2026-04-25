@@ -1,11 +1,10 @@
 const fs = require("fs-extra");
 const path = require("path");
 const {
-  ROOT_DIR,
-  INDEX_FILE,
   DEFAULT_IGNORE_DIRS,
   DEFAULT_IGNORE_FILES
 } = require("./constants");
+const { createRuntimeContext } = require("./runtimeContext");
 const { isTextExtension, toRelative } = require("./pathUtils");
 
 function extractImports(content) {
@@ -26,8 +25,8 @@ function extractImports(content) {
   return [...imports].slice(0, 20);
 }
 
-async function buildFileEntry(filePath, stats) {
-  const relativePath = toRelative(filePath);
+async function buildFileEntry(filePath, stats, runtime = createRuntimeContext()) {
+  const relativePath = toRelative(filePath, runtime);
   const entry = {
     path: relativePath,
     name: path.basename(filePath),
@@ -51,7 +50,7 @@ async function buildFileEntry(filePath, stats) {
   return entry;
 }
 
-async function walkDirectory(currentDir, entries) {
+async function walkDirectory(currentDir, entries, runtime = createRuntimeContext()) {
   const items = await fs.readdir(currentDir);
 
   for (const item of items) {
@@ -63,35 +62,35 @@ async function walkDirectory(currentDir, entries) {
     const stats = await fs.stat(fullPath);
 
     if (stats.isDirectory()) {
-      await walkDirectory(fullPath, entries);
+      await walkDirectory(fullPath, entries, runtime);
       continue;
     }
 
-    entries.push(await buildFileEntry(fullPath, stats));
+    entries.push(await buildFileEntry(fullPath, stats, runtime));
   }
 }
 
-async function buildProjectIndex() {
+async function buildProjectIndex(runtime = createRuntimeContext()) {
   const entries = [];
-  await walkDirectory(ROOT_DIR, entries);
+  await walkDirectory(runtime.rootDir, entries, runtime);
 
   const index = {
-    rootDir: ROOT_DIR,
+    rootDir: runtime.rootDir,
     generatedAt: new Date().toISOString(),
     fileCount: entries.length,
     entries
   };
 
-  await fs.writeJson(INDEX_FILE, index, { spaces: 2 });
+  await fs.writeJson(runtime.indexFile, index, { spaces: 2 });
   return index;
 }
 
-async function loadProjectIndex() {
-  if (!(await fs.pathExists(INDEX_FILE))) {
-    return buildProjectIndex();
+async function loadProjectIndex(runtime = createRuntimeContext()) {
+  if (!(await fs.pathExists(runtime.indexFile))) {
+    return buildProjectIndex(runtime);
   }
 
-  return fs.readJson(INDEX_FILE);
+  return fs.readJson(runtime.indexFile);
 }
 
 module.exports = {

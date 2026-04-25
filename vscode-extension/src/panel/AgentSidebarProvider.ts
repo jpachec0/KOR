@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { BackendClient, EditorContextPayload, PendingChange, SidebarState } from "../services/backendClient";
+import { CoreClient, EditorContextPayload, PendingChange, SidebarState } from "../services/coreClient";
 import { renderMarkdown } from "../utils/markdown";
 
 type WebviewIncomingMessage =
@@ -27,7 +27,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly backendClient: BackendClient
+    private readonly coreClient: CoreClient
   ) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -52,8 +52,8 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const healthy = await this.backendClient.healthCheck();
-    if (!healthy) {
+    const workspacePath = this.getWorkspaceRootPath();
+    if (!workspacePath) {
       this.postMessage({
         type: "connection",
         connected: false
@@ -66,14 +66,15 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       connected: true
     });
 
-    this.state = await this.backendClient.getState();
+    this.state = await this.coreClient.getState(workspacePath);
     this.postState();
   }
 
   async createChat(name?: string): Promise<void> {
+    const workspacePath = this.getWorkspaceRootPathOrThrow();
     this.setBusy(true);
     try {
-      this.state = await this.backendClient.createChat(name);
+      this.state = await this.coreClient.createChat(workspacePath, name);
       this.postState();
     } finally {
       this.setBusy(false);
@@ -81,9 +82,10 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
   }
 
   async activateChat(chatId: string): Promise<void> {
+    const workspacePath = this.getWorkspaceRootPathOrThrow();
     this.setBusy(true);
     try {
-      this.state = await this.backendClient.activateChat(chatId);
+      this.state = await this.coreClient.activateChat(workspacePath, chatId);
       this.postState();
     } finally {
       this.setBusy(false);
@@ -95,9 +97,11 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    const workspacePath = this.getWorkspaceRootPathOrThrow();
     this.setBusy(true, "IA pensando...");
     try {
-      const response = await this.backendClient.ask(
+      const response = await this.coreClient.ask(
+        workspacePath,
         this.state.activeChat.id,
         question,
         this.getEditorContext()
@@ -127,16 +131,17 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    const workspacePath = this.getWorkspaceRootPathOrThrow();
     this.setBusy(true, "Aplicando alteracoes...");
     try {
-      const pending = await this.backendClient.getPending(this.state.activeChat.id);
+      const pending = await this.coreClient.getPending(workspacePath, this.state.activeChat.id);
       if (!pending.changes?.length) {
         void vscode.window.showInformationMessage("Nao ha alteracoes pendentes para aplicar.");
         return;
       }
 
       await this.applyWorkspaceEdit(pending.changes);
-      this.state = await this.backendClient.clearPending(this.state.activeChat.id);
+      this.state = await this.coreClient.clearPending(workspacePath, this.state.activeChat.id);
       this.postState();
       void vscode.window.showInformationMessage("Alteracoes aplicadas no workspace.");
     } catch (error) {
@@ -166,7 +171,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private async applyWorkspaceEdit(changes: PendingChange[]): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const workspaceFolder = this.getWorkspaceFolder();
     if (!workspaceFolder) {
       throw new Error("Abra uma pasta no VS Code para aplicar alteracoes.");
     }
@@ -242,6 +247,30 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
     };
   }
 
+  private getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
+    const activeEditorUri = vscode.window.activeTextEditor?.document.uri;
+    if (activeEditorUri) {
+      const activeWorkspace = vscode.workspace.getWorkspaceFolder(activeEditorUri);
+      if (activeWorkspace) {
+        return activeWorkspace;
+      }
+    }
+
+    return vscode.workspace.workspaceFolders?.[0];
+  }
+
+  private getWorkspaceRootPath(): string | undefined {
+    return this.getWorkspaceFolder()?.uri.fsPath;
+  }
+
+  private getWorkspaceRootPathOrThrow(): string {
+    const workspacePath = this.getWorkspaceRootPath();
+    if (!workspacePath) {
+      throw new Error("Abra uma pasta no VS Code para usar o agente.");
+    }
+    return workspacePath;
+  }
+
   private postState(): void {
     if (!this.state) {
       return;
@@ -304,20 +333,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
   }
 
   private showError(error: unknown): void {
-    const message =
-      typeof error === "object" &&
-      error !== null &&
-      "response" in error &&
-      typeof error.response === "object" &&
-      error.response &&
-      "data" in error.response &&
-      typeof error.response.data === "object" &&
-      error.response.data &&
-      "error" in error.response.data
-        ? String(error.response.data.error)
-        : error instanceof Error
-          ? error.message
-          : "Erro inesperado.";
+    const message = error instanceof Error ? error.message : "Erro inesperado.";
     this.postMessage({
       type: "error",
       message

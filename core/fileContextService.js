@@ -1,13 +1,14 @@
 const fs = require("fs-extra");
-const { MAX_CONTEXT_CHARS, MAX_FILE_BYTES, ROOT_DIR } = require("./constants");
+const { MAX_CONTEXT_CHARS, MAX_FILE_BYTES } = require("./constants");
 const { resolveWithinRoot } = require("./pathUtils");
+const { createRuntimeContext } = require("./runtimeContext");
 
-async function loadFilesForPrompt(relativePaths) {
+async function loadFilesForPrompt(relativePaths, runtime = createRuntimeContext()) {
   const files = [];
   let totalChars = 0;
 
   for (const relativePath of relativePaths) {
-    const fullPath = resolveWithinRoot(relativePath);
+    const fullPath = resolveWithinRoot(relativePath, runtime);
     if (!(await fs.pathExists(fullPath))) {
       continue;
     }
@@ -33,7 +34,7 @@ async function loadFilesForPrompt(relativePaths) {
   }
 
   return {
-    rootDir: ROOT_DIR,
+    rootDir: runtime.rootDir,
     files
   };
 }

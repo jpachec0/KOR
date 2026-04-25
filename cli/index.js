@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 const readline = require("readline");
-const { ensureRuntime } = require("../core/runtime");
 const logger = require("../core/logger");
-const {
-  createChat,
-  listChats,
-  setActiveChat,
-  getActiveChatMeta
-} = require("../core/chatManager");
-const { askAgent, applyPendingChanges, getPendingChanges } = require("../core/agentService");
+const { createKorCore } = require("../core");
+
+const kor = createKorCore(process.cwd());
 
 function printHelp() {
   console.log([
@@ -30,11 +25,7 @@ function formatChat(chat, activeChatId) {
 }
 
 async function ensureActiveChat() {
-  let active = await getActiveChatMeta();
-  if (!active) {
-    active = await createChat("chat-inicial");
-  }
-  return active;
+  return kor.ensureActiveChat();
 }
 
 async function handleCommand(input) {
@@ -50,14 +41,14 @@ async function handleCommand(input) {
 
   if (trimmed.startsWith("new-chat")) {
     const name = trimmed.replace(/^new-chat\s*/, "").trim() || undefined;
-    const chat = await createChat(name);
+    const chat = await kor.createChat(name);
     console.log(`Chat criado e selecionado: ${chat.id} (${chat.name})`);
     return;
   }
 
   if (trimmed === "list-chats") {
-    const active = await getActiveChatMeta();
-    const chats = await listChats();
+    const active = await kor.getActiveChat();
+    const chats = await kor.listChats();
     if (!chats.length) {
       console.log("Nenhum chat encontrado.");
       return;
@@ -74,8 +65,7 @@ async function handleCommand(input) {
       return;
     }
 
-    await setActiveChat(chatId);
-    const active = await getActiveChatMeta();
+    const active = await kor.useChat(chatId);
     console.log(`Chat ativo: ${active.id} (${active.name})`);
     return;
   }
@@ -89,7 +79,7 @@ async function handleCommand(input) {
 
     const active = await ensureActiveChat();
     logger.info(`Executando pergunta no chat ${active.id}`);
-    const result = await askAgent(active.id, question);
+    const result = await kor.askAgent(active.id, question);
     console.log("\nResposta:\n");
     console.log(result.answer);
 
@@ -116,14 +106,14 @@ async function handleCommand(input) {
 
   if (trimmed === "apply") {
     const active = await ensureActiveChat();
-    const pending = await getPendingChanges(active.id);
+    const pending = await kor.getPendingChanges(active.id);
     if (!pending.length) {
       console.log("Nao ha alteracoes pendentes.");
       return;
     }
 
     console.log("Aplicando alteracoes pendentes...");
-    const result = await applyPendingChanges(active.id);
+    const result = await kor.applyChanges(active.id);
     console.log(result.message);
     return;
   }
@@ -148,7 +138,7 @@ async function runSingleCommandFromArgs(argv) {
 }
 
 async function main() {
-  await ensureRuntime();
+  await kor.ensureRuntime();
   await ensureActiveChat();
 
   if (await runSingleCommandFromArgs(process.argv.slice(2))) {

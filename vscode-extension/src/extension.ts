@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { AgentSidebarProvider } from "./panel/AgentSidebarProvider";
-import { BackendClient } from "./services/backendClient";
+import { CoreClient } from "./services/coreClient";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const backendClient = new BackendClient(context);
-  const sidebarProvider = new AgentSidebarProvider(context, backendClient);
+  const coreClient = new CoreClient();
+  const sidebarProvider = new AgentSidebarProvider(context, coreClient);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(AgentSidebarProvider.viewType, sidebarProvider, {
