@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { buildJsonResponseFormat } = require("../responseFormat");
 
 async function requestOpenRouterCompletion(config, prompt) {
   const response = await axios.post(
@@ -12,6 +13,10 @@ async function requestOpenRouterCompletion(config, prompt) {
           role: "user",
           content: prompt
         }
+      ],
+      response_format: buildJsonResponseFormat(),
+      plugins: [
+        { id: "response-healing" }
       ]
     },
     {

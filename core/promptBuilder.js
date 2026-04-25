@@ -34,10 +34,14 @@ function buildPrompt({ question, projectIndex, contextSummary, recentMessages, f
     "Nao invente codigo.",
     "Use apenas o contexto fornecido.",
     "Retorne codigo completo quando necessario.",
+    "Voce DEVE responder APENAS com JSON valido.",
+    "Nao use markdown.",
+    "Nao adicione explicacoes fora do JSON.",
     "Quando sugerir alteracoes, responda em JSON puro com as chaves answer, summary, relevantFiles e proposedChanges.",
     "Cada item de proposedChanges deve ter path, action, content e reason.",
     "Use content completo para o estado final do arquivo.",
-    "Se nenhuma alteracao for necessaria, proposedChanges deve ser um array vazio."
+    "Se nenhuma alteracao for necessaria, proposedChanges deve ser um array vazio.",
+    'O formato esperado e: {"answer":"string","summary":"string","relevantFiles":["file"],"proposedChanges":[{"path":"string","action":"create|update|delete","content":"string","reason":"string"}]}.'
   ].join(" ");
 
   return [

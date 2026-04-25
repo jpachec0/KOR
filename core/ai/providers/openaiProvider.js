@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { buildJsonResponseFormat } = require("../responseFormat");
 
 async function requestOpenAiCompletion(config, prompt) {
   const response = await axios.post(
@@ -12,7 +13,8 @@ async function requestOpenAiCompletion(config, prompt) {
           role: "user",
           content: prompt
         }
-      ]
+      ],
+      response_format: buildJsonResponseFormat()
     },
     {
       headers: {
