@@ -1,0 +1,11 @@
+.ai-agent/chats/*
+!.ai-agent/chats/.gitkeep
+.ai-agent/memory/*
+!.ai-agent/memory/.gitkeep
+.ai-agent/index/*
+!.ai-agent/index/.gitkeep
+.ai-agent/session.json
+.ai-agent/cache.json
+node_modules/
+npm-debug.log*
+.codex

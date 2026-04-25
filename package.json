@@ -1,0 +1,20 @@
+{
+  "name": "kor-local-ai-agent",
+  "version": "1.0.0",
+  "description": "Agente local de programacao com chats persistentes, memoria contextual e suporte a multiplos providers de IA.",
+  "main": "cli/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node cli/index.js",
+    "chat": "node cli/index.js"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "diff": "^5.2.0",
+    "fs-extra": "^11.3.0",
+    "uuid": "^11.1.0"
+  }
+}
