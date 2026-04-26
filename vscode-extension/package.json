@@ -4,6 +4,10 @@
   "description": "Interface moderna do agente local KOR no Visual Studio Code.",
   "version": "1.0.0",
   "publisher": "jpachec0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpachec0/KOR.git"
+  },
   "engines": {
     "vscode": "^1.88.0"
   },
