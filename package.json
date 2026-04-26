@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Agente local de programacao com chats persistentes, memoria contextual e suporte a multiplos providers de IA.",
   "main": "cli/index.js",
+  "bin": {
+    "kor": "cli/index.js"
+  },
   "type": "commonjs",
   "scripts": {
     "start": "node cli/index.js",

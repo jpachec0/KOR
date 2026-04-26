@@ -10,7 +10,25 @@ O KOR é um poderoso assistente de desenvolvimento local e extensão do VS Code 
 - **Painel de Diff Visual:** Toda sugestão de código é exibida para você de forma transparente com uma visualização de *Diff* completa (linhas adicionadas e removidas) na própria aba do VS Code antes de ser aplicada ao código final.
 - **Suporte Multi-Provedor Seguro:** Suporte nativo para **OpenRouter**, **OpenAI** e **HuggingFace**. O setup é interativo e 100% seguro: as chaves (API Keys) nunca tocam na pasta do seu projeto. Elas ficam armazenadas em nível global na sua máquina (AppData/Home), mantendo seu Git completamente limpo.
 
-## Como Usar (VS Code)
+## Instalação e Uso Global (Terminal CLI)
+
+Você pode instalar o KOR globalmente no seu computador para acessá-lo de qualquer pasta diretamente pelo terminal!
+
+1. Navegue até a pasta onde o repositório KOR está baixado: `cd KOR-main`
+2. Instale globalmente usando o npm:
+   ```bash
+   npm install -g .
+   ```
+3. Pronto! Agora você pode chamar o KOR de qualquer lugar digitando apenas `kor` no terminal para abrir o modo interativo, ou passar a ação diretamente:
+   ```bash
+   kor ask "crie um arquivo de teste"
+   kor apply
+   kor list-chats
+   ```
+
+**Para Atualizar:** Sempre que baixar uma versão nova do repositório, basta rodar `npm install -g .` novamente dentro da pasta do KOR para atualizar o comando global do seu sistema.
+
+## Como Usar (Extensão VS Code)
 
 1. Rode `npm run watch` no terminal dentro da pasta `vscode-extension` (ou compile com F5 usando as tarefas `.vscode`).
 2. Abra a extensão no seu editor de código.
