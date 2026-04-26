@@ -5,6 +5,10 @@ const { resolveWithinRoot } = require("./pathUtils");
 const { createRuntimeContext } = require("./runtimeContext");
 
 async function buildDiff(change, runtime = createRuntimeContext()) {
+  if (change.action === "executeCommand") {
+    return `Executar comando de terminal:\n\n> ${change.content}\n`;
+  }
+
   const absolutePath = resolveWithinRoot(change.path, runtime);
   const exists = await fs.pathExists(absolutePath);
   const oldContent = exists ? await fs.readFile(absolutePath, "utf8") : "";

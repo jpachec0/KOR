@@ -37,7 +37,7 @@ function normalizeParsedResponse(parsed, originalText = "") {
             content: typeof item.content === "string" ? item.content : "",
             reason: typeof item.reason === "string" ? item.reason : ""
           }))
-          .filter((item) => item.path)
+          .filter((item) => item.path || item.action === "executeCommand")
       : []
   };
 }
