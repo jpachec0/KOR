@@ -40,6 +40,7 @@ export interface EditorContextPayload {
   activeFile?: string;
   selectedText?: string;
   surroundingText?: string;
+  openFiles?: { path: string; content: string }[];
 }
 
 interface KorCoreFacade {

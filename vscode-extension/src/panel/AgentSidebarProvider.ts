@@ -237,23 +237,33 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
 
   private getEditorContext(): EditorContextPayload {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return {};
+    const document = editor?.document;
+    const activeFile = document ? vscode.workspace.asRelativePath(document.uri, false) : undefined;
+    const selectedText = editor && !editor.selection.isEmpty ? document?.getText(editor.selection).trim() : undefined;
+    let surroundingText = undefined;
+
+    if (editor && document) {
+      const startLine = Math.max(0, editor.selection.start.line - 12);
+      const endLine = Math.min(document.lineCount - 1, editor.selection.end.line + 12);
+      surroundingText = document.getText(
+        new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length)
+      );
     }
 
-    const document = editor.document;
-    const activeFile = vscode.workspace.asRelativePath(document.uri, false);
-    const selectedText = editor.selection.isEmpty ? "" : document.getText(editor.selection).trim();
-    const startLine = Math.max(0, editor.selection.start.line - 12);
-    const endLine = Math.min(document.lineCount - 1, editor.selection.end.line + 12);
-    const surroundingText = document.getText(
-      new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length)
-    );
+    const openFiles = vscode.workspace.textDocuments
+      .filter((doc) => !doc.isClosed && doc.uri.scheme === "file")
+      .filter((doc) => doc.getText().length < 50000) // Limit to 50KB per file to avoid massive payloads
+      .slice(0, 10) // Limit to 10 files max to prevent ECONNRESET on API
+      .map((doc) => ({
+        path: vscode.workspace.asRelativePath(doc.uri, false),
+        content: doc.getText()
+      }));
 
     return {
       activeFile,
       selectedText,
-      surroundingText
+      surroundingText,
+      openFiles
     };
   }
 

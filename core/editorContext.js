@@ -23,6 +23,18 @@ function buildQuestionWithEditorContext(question, editorContext = {}) {
     ].join("\n"));
   }
 
+  if (editorContext.openFiles && editorContext.openFiles.length > 0) {
+    parts.push("O usuario tem os seguintes arquivos abertos ativamente no seu editor de codigo:");
+    for (const file of editorContext.openFiles) {
+      parts.push([
+        `--- Arquivo: ${file.path} ---`,
+        "```",
+        file.content,
+        "```"
+      ].join("\n"));
+    }
+  }
+
   return parts.filter(Boolean).join("\n\n");
 }
 

@@ -12,7 +12,7 @@
     pendingCount: 0,
     editorContext: {},
     draft: "",
-    activeTab: "chat", // "chat", "setup", "settings"
+    activeTab: "home", // "home", "chat", "setup", "settings"
     config: {
       provider: "openrouter",
       apiKey: "",
@@ -52,6 +52,7 @@
     const selectionChip = state.editorContext.selectedText
       ? `<span class="context-chip">${state.editorContext.selectedText.length} chars selected</span>`
       : "";
+      
     const chatItems = state.chats
       .map((chat) => {
         const isActive = state.activeChat && chat.id === state.activeChat.id;
@@ -97,6 +98,7 @@
                     <span class="badge">${escapeHtml(item.action)}</span>
                     ${item.reason ? `<span class="pending-reason">${escapeHtml(item.reason)}</span>` : ""}
                   </div>
+                  ${item.diff ? `<div class="diff-preview"><pre><code>${escapeHtml(item.diff)}</code></pre></div>` : ""}
                 </div>`
               )
               .join("")}
@@ -107,11 +109,18 @@
     const busyLine = state.busy ? `<div class="busy-line">${escapeHtml(state.busyLabel || "IA pensando...")}</div>` : "";
     const errorLine = state.error ? `<div class="error-line">${escapeHtml(state.error)}</div>` : "";
 
-    // Tabs content
+    // Home Content
+    const homeContent = `
+      <div class="home-header">
+        <h2>Seus Chats</h2>
+      </div>
+      <div class="chat-list">
+        ${chatItems || `<div style="text-align:center; color: var(--muted); padding: 20px;">Nenhum chat salvo. Crie um novo!</div>`}
+      </div>
+    `;
+
+    // Chat Content
     const chatContent = `
-      <section class="chat-strip">
-        ${chatItems}
-      </section>
       <section class="context-bar">
         ${contextFile}
         ${selectionChip}
@@ -171,7 +180,7 @@
     `;
 
     const settingsContent = `
-      <div style="padding: 16px; overflow-y: auto;">
+      <div class="settings-container">
         ${errorLine}
         <h2>Configurações Avançadas</h2>
         <div class="form-group">
@@ -188,35 +197,51 @@
       </div>
     `;
 
+    let topbarActions = "";
+    if (state.activeTab === "chat") {
+      topbarActions = `<button class="ghost-button" data-action="switch-tab" data-tab="home">⬅ Voltar</button>`;
+    } else {
+      topbarActions = `
+        <button class="ghost-button" data-action="refresh">Refresh</button>
+        <button class="primary-button" data-action="new-chat">New</button>
+      `;
+    }
+
+    const tabsHtml = state.activeTab === "chat" ? "" : `
+      <div class="tabs">
+        <button class="tab ${state.activeTab === 'home' ? 'active' : ''}" data-action="switch-tab" data-tab="home">Chats</button>
+        <button class="tab ${state.activeTab === 'setup' ? 'active' : ''}" data-action="switch-tab" data-tab="setup">Setup</button>
+        <button class="tab ${state.activeTab === 'settings' ? 'active' : ''}" data-action="switch-tab" data-tab="settings">Avançado</button>
+      </div>
+    `;
+
     app.innerHTML = `
-      <div class="shell" style="grid-template-rows: auto auto 1fr;">
+      <div class="shell">
         <header class="topbar">
           <div class="brand-block">
-            <div class="brand-mark">K</div>
+            <div class="brand-logo-space">K</div>
             <div>
-              <div class="brand-title">KOR Local Agent</div>
-              <div class="${connectionClass}">${state.connected ? "Workspace conectado" : "Abra uma pasta no VS Code"}</div>
+              <div class="brand-title">KOR Agent</div>
+              <div class="${connectionClass}">${state.connected ? "Conectado" : "Desconectado"}</div>
             </div>
           </div>
           <div class="topbar-actions">
-            <button class="ghost-button" data-action="refresh">Refresh</button>
-            <button class="primary-button" data-action="new-chat">New</button>
+            ${topbarActions}
           </div>
         </header>
 
-        <div class="tabs">
-          <button class="tab ${state.activeTab === 'chat' ? 'active' : ''}" data-action="switch-tab" data-tab="chat">Chat</button>
-          <button class="tab ${state.activeTab === 'setup' ? 'active' : ''}" data-action="switch-tab" data-tab="setup">Setup</button>
-          <button class="tab ${state.activeTab === 'settings' ? 'active' : ''}" data-action="switch-tab" data-tab="settings">Configurações</button>
-        </div>
+        ${tabsHtml}
 
-        <div class="tab-content ${state.activeTab === 'chat' ? 'active' : ''}" style="${state.activeTab === 'chat' ? 'display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 10px;' : 'display: none;'}">
+        <div class="tab-content ${state.activeTab === 'home' ? 'active' : ''}">
+          ${homeContent}
+        </div>
+        <div class="tab-content ${state.activeTab === 'chat' ? 'active' : ''}">
           ${chatContent}
         </div>
-        <div class="tab-content ${state.activeTab === 'setup' ? 'active' : ''}" style="${state.activeTab === 'setup' ? 'display: block;' : 'display: none;'}">
+        <div class="tab-content ${state.activeTab === 'setup' ? 'active' : ''}">
           ${setupContent}
         </div>
-        <div class="tab-content ${state.activeTab === 'settings' ? 'active' : ''}" style="${state.activeTab === 'settings' ? 'display: block;' : 'display: none;'}">
+        <div class="tab-content ${state.activeTab === 'settings' ? 'active' : ''}">
           ${settingsContent}
         </div>
       </div>
@@ -339,6 +364,8 @@
 
     if (action === "new-chat") {
       vscode.postMessage({ type: "newChat" });
+      state.activeTab = "chat";
+      render();
       return;
     }
 
@@ -357,6 +384,8 @@
         type: "switchChat",
         chatId: target.getAttribute("data-chat-id")
       });
+      state.activeTab = "chat";
+      render();
     }
 
     if (action === "switch-tab") {

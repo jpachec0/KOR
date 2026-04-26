@@ -1,8 +1,11 @@
 const path = require("path");
+const os = require("os");
+const crypto = require("crypto");
 
 function createRuntimeContext(rootDir = process.cwd()) {
   const normalizedRootDir = path.resolve(rootDir);
-  const runtimeDir = path.join(normalizedRootDir, ".ai-agent");
+  const pathHash = crypto.createHash("md5").update(normalizedRootDir).digest("hex");
+  const runtimeDir = path.join(os.homedir(), ".kor", "workspaces", pathHash);
   const memoryDir = path.join(runtimeDir, "memory");
   const indexDir = path.join(runtimeDir, "index");
 
@@ -15,7 +18,7 @@ function createRuntimeContext(rootDir = process.cwd()) {
     sessionFile: path.join(runtimeDir, "session.json"),
     cacheFile: path.join(memoryDir, "response-cache.json"),
     indexFile: path.join(indexDir, "project-index.json"),
-    aiConfigFile: path.join(normalizedRootDir, "config", "ai.json"),
+    aiConfigFile: path.join(runtimeDir, "ai.json"),
     credentialsFile: path.join(runtimeDir, "credentials.json")
   };
 }

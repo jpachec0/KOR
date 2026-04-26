@@ -1,6 +1,20 @@
 function fallbackResponse(text, summary = "fallback") {
+  let finalAnswer = typeof text === "string" && text.trim() ? text.trim() : "Sem resposta textual.";
+  
+  if (typeof text === "string") {
+    // Attempt to salvage the "answer" string if AI leaked raw JSON that failed to parse
+    const answerMatch = text.match(/"answer"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/);
+    if (answerMatch && answerMatch[1]) {
+      try {
+        finalAnswer = JSON.parse(`"${answerMatch[1]}"`); // unescape
+      } catch (_e) {
+        finalAnswer = answerMatch[1];
+      }
+    }
+  }
+
   return {
-    answer: typeof text === "string" && text.trim() ? text.trim() : "Sem resposta textual.",
+    answer: finalAnswer,
     summary,
     relevantFiles: [],
     proposedChanges: []
