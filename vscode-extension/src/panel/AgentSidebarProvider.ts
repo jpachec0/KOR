@@ -244,9 +244,11 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       documentsToSave.add(uri.toString());
     }
 
-    const applied = await vscode.workspace.applyEdit(edit);
-    if (!applied) {
-      throw new Error("O VS Code nao conseguiu aplicar as alteracoes propostas.");
+    if (edit.size > 0) {
+      const applied = await vscode.workspace.applyEdit(edit);
+      if (!applied) {
+        throw new Error("O VS Code nao conseguiu aplicar as alteracoes propostas.");
+      }
     }
 
     for (const documentUri of documentsToSave) {
