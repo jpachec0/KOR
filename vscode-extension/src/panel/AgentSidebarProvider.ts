@@ -247,7 +247,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
     if (edit.size > 0) {
       const applied = await vscode.workspace.applyEdit(edit);
       if (!applied) {
-        throw new Error("O VS Code nao conseguiu aplicar as alteracoes propostas.");
+        throw new Error(`O VS Code nao conseguiu aplicar as alteracoes propostas. (Tamanho do Edit: ${edit.size})`);
       }
     }
 
