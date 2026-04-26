@@ -16,7 +16,7 @@ export interface ChatMessage {
 
 export interface PendingChange {
   path: string;
-  action: "create" | "update" | "delete";
+  action: "create" | "update" | "delete" | "executeCommand";
   content?: string;
   reason?: string;
 }
