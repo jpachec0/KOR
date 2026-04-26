@@ -39,9 +39,10 @@ function buildPrompt({ question, projectIndex, contextSummary, recentMessages, f
     "Se a resposta nao exigir edicoes de arquivos (ex: tirar duvidas, saudacoes), mantenha proposedChanges como um array vazio [].",
     "Voce PODE e DEVE sugerir alteracoes simultaneas em VARIOS arquivos diferentes de uma vez, se a solicitacao exigir. Adicione cada arquivo como um objeto no array proposedChanges.",
     "Se for necessario criar novos arquivos (ex: testes, novos componentes), use action: 'create' e passe o caminho desejado em 'path'.",
-    "Cada item de proposedChanges deve ter path, action (create|update|delete), content e reason.",
+    "Se for necessario RODAR UM COMANDO no terminal (ex: git commit, npm install, tsc), use action: 'executeCommand' e coloque o comando exato na chave 'content' (a chave 'path' pode ser uma string vazia). O sistema rodará o comando, mostrará para o usuário aprovar, e devolverá o resultado (erro ou sucesso) para você em seguida.",
+    "Cada item de proposedChanges deve ter path, action (create|update|delete|executeCommand), content e reason.",
     "Use 'content' completo com o codigo final absoluto do arquivo (sem truncar).",
-    'Exemplo obrigatorio de proposedChanges com multiplos arquivos: [{"path":"src/novo.js","action":"create","content":"...","reason":"..."}, {"path":"src/antigo.js","action":"update","content":"...","reason":"..."}]'
+    'Exemplo obrigatorio de proposedChanges com multiplos arquivos e comandos: [{"path":"src/novo.js","action":"create","content":"...","reason":"..."}, {"path":"","action":"executeCommand","content":"npm install axios","reason":"..."}]'
   ].join(" ");
 
   return [

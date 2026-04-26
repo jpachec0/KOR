@@ -1,7 +1,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as cp from "child_process";
+import * as util from "util";
 import { CoreClient, EditorContextPayload, PendingChange, SidebarState } from "../services/coreClient";
 import { renderMarkdown } from "../utils/markdown";
+
+const execAsync = util.promisify(cp.exec);
 
 type WebviewIncomingMessage =
   | { type: "ready" }
@@ -150,10 +154,15 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
         return;
       }
 
-      await this.applyWorkspaceEdit(pending.changes);
+      const commandResults = await this.applyWorkspaceEdit(pending.changes);
       this.state = await this.coreClient.clearPending(workspacePath, this.state.activeChat.id);
       this.postState();
-      void vscode.window.showInformationMessage("Alteracoes aplicadas no workspace.");
+      void vscode.window.showInformationMessage("Alteracoes aplicadas com sucesso.");
+
+      if (commandResults && commandResults.length > 0) {
+        const feedback = `Os comandos solicitados foram executados no terminal pelo sistema.\nResultados:\n\n${commandResults.join("\n\n")}\n\nPor favor, analise o resultado. Se houver erros, sugira a correção. Se finalizou a tarefa, apenas confirme.`;
+        await this.ask(feedback);
+      }
     } catch (error) {
       this.showError(error);
     } finally {
@@ -180,7 +189,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
     this.postState();
   }
 
-  private async applyWorkspaceEdit(changes: PendingChange[]): Promise<void> {
+  private async applyWorkspaceEdit(changes: PendingChange[]): Promise<string[]> {
     const workspaceFolder = this.getWorkspaceFolder();
     if (!workspaceFolder) {
       throw new Error("Abra uma pasta no VS Code para aplicar alteracoes.");
@@ -188,8 +197,19 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
 
     const edit = new vscode.WorkspaceEdit();
     const documentsToSave = new Set<string>();
+    const commandOutputs: string[] = [];
 
     for (const change of changes) {
+      if (change.action === "executeCommand") {
+        try {
+          const { stdout, stderr } = await execAsync(change.content || "", { cwd: workspaceFolder.uri.fsPath });
+          commandOutputs.push(`[SUCESSO] Comando: \`${change.content}\`\n\`\`\`\nSTDOUT: ${stdout}\nSTDERR: ${stderr}\n\`\`\``);
+        } catch (err: any) {
+          commandOutputs.push(`[ERRO] Comando: \`${change.content}\`\n\`\`\`\nSTDOUT: ${err.stdout}\nSTDERR: ${err.stderr}\nMESSAGE: ${err.message}\n\`\`\``);
+        }
+        continue;
+      }
+
       const uri = vscode.Uri.joinPath(workspaceFolder.uri, change.path);
 
       if (change.action === "delete") {
@@ -233,6 +253,8 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
       const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(documentUri));
       await document.save();
     }
+
+    return commandOutputs;
   }
 
   private getEditorContext(): EditorContextPayload {
