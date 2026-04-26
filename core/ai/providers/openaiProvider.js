@@ -2,8 +2,13 @@ const axios = require("axios");
 const { buildJsonResponseFormat } = require("../responseFormat");
 
 async function requestOpenAiCompletion(config, prompt) {
+  let endpoint = config.baseUrl || "https://api.openai.com/v1/chat/completions";
+  if (config.baseUrl && !config.baseUrl.endsWith("/chat/completions")) {
+    endpoint = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  }
+
   const response = await axios.post(
-    config.baseUrl || "https://api.openai.com/v1/chat/completions",
+    endpoint,
     {
       model: config.model,
       temperature: config.temperature,

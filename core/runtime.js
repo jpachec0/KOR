@@ -1,5 +1,6 @@
 const fs = require("fs-extra");
 const { createRuntimeContext } = require("./runtimeContext");
+const { ensureCredentialsFile } = require("./credentialStore");
 
 async function ensureJsonFile(filePath, fallback) {
   if (!(await fs.pathExists(filePath))) {
@@ -14,6 +15,7 @@ async function ensureRuntime(runtime = createRuntimeContext()) {
   await fs.ensureDir(runtime.indexDir);
   await ensureJsonFile(runtime.sessionFile, { activeChatId: null });
   await ensureJsonFile(runtime.cacheFile, { responses: {} });
+  await ensureCredentialsFile(runtime);
 }
 
 module.exports = {

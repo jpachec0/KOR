@@ -6,6 +6,7 @@
 !.ai-agent/index/.gitkeep
 .ai-agent/session.json
 .ai-agent/cache.json
+.ai-agent/credentials.json
 node_modules/
 vscode-extension/node_modules/
 npm-debug.log*

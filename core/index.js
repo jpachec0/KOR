@@ -11,6 +11,9 @@ const {
 const { ensureRuntime } = require("./runtime");
 const { askAgent, applyPendingChanges, getPendingChanges } = require("./agentService");
 const { createRuntimeContext } = require("./runtimeContext");
+const { loadAiConfig, saveAiConfig } = require("./configService");
+const { fetchModels } = require("./ai/modelFetcher");
+const { getApiKey } = require("./credentialStore");
 
 async function ensureActiveChat(runtime) {
   let active = await getActiveChatMeta(runtime);
@@ -69,7 +72,11 @@ function createKorCore(rootDir = process.cwd()) {
         projectRoot: runtime.rootDir
       }, runtime);
       return buildState(runtime, chatId);
-    }
+    },
+    getAiConfig: () => loadAiConfig(runtime),
+    saveAiConfig: (config) => saveAiConfig(config, runtime),
+    fetchModels: (provider, apiKey) => fetchModels(provider, apiKey),
+    getApiKey: (provider) => getApiKey(provider, runtime)
   };
 }
 

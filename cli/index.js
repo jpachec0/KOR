@@ -9,6 +9,8 @@ function printHelp() {
   console.log([
     "",
     "Comandos disponiveis:",
+    "  setup",
+    "  config set {key} {value}",
     "  new-chat [nome]",
     "  list-chats",
     "  use-chat {id}",
@@ -28,7 +30,21 @@ async function ensureActiveChat() {
   return kor.ensureActiveChat();
 }
 
-async function handleCommand(input) {
+async function promptQuestion(rl, text) {
+  return new Promise((resolve) => {
+    if (!rl) {
+      const tempRl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      tempRl.question(text, (ans) => {
+        tempRl.close();
+        resolve(ans);
+      });
+    } else {
+      rl.question(text, resolve);
+    }
+  });
+}
+
+async function handleCommand(input, rl = null) {
   const trimmed = input.trim();
   if (!trimmed) {
     return;
@@ -118,6 +134,73 @@ async function handleCommand(input) {
     return;
   }
 
+  if (trimmed.startsWith("config set ")) {
+    const parts = trimmed.replace("config set ", "").split(" ");
+    if (parts.length < 2) {
+      console.log("Uso: config set <key> <value>");
+      return;
+    }
+    const key = parts[0];
+    let value = parts.slice(1).join(" ");
+    
+    if (key === "maxTokens") value = parseInt(value, 10);
+    if (key === "temperature") value = parseFloat(value);
+
+    await kor.saveAiConfig({ [key]: value });
+    console.log(`Configuracao atualizada: ${key} = ${value}`);
+    return;
+  }
+
+  if (trimmed === "setup") {
+    console.log("=== Setup do Provedor de IA ===");
+    const provider = await promptQuestion(rl, "Provedor (openrouter, openai, huggingface): ");
+    if (!provider) return;
+    
+    let apiKey = await promptQuestion(rl, "API Key (deixe em branco para manter a atual): ");
+    
+    if (!apiKey) {
+      apiKey = await kor.getApiKey(provider);
+      if (!apiKey) {
+        console.log("Chave de API nao fornecida e nenhuma salva para este provedor. Abortando.");
+        return;
+      }
+    }
+
+    console.log(`Buscando modelos para ${provider}...`);
+    try {
+      const models = await kor.fetchModels(provider, apiKey);
+      if (!models.length) {
+        console.log("Nenhum modelo encontrado.");
+        return;
+      }
+
+      console.log("\nModelos disponiveis:");
+      models.forEach((m, i) => {
+        console.log(`[${i + 1}] ${m.name}`);
+      });
+
+      const selectedIdxStr = await promptQuestion(rl, "\nSelecione o numero do modelo: ");
+      const selectedIdx = parseInt(selectedIdxStr, 10) - 1;
+      
+      if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= models.length) {
+        console.log("Selecao invalida.");
+        return;
+      }
+
+      const selectedModel = models[selectedIdx].id;
+      await kor.saveAiConfig({
+        provider,
+        apiKey, // This will be intercepted by saveAiConfig and securely saved
+        model: selectedModel
+      });
+
+      console.log(`Setup concluido. Modelo selecionado: ${selectedModel}`);
+    } catch (err) {
+      console.log(`Erro durante o setup: ${err.message}`);
+    }
+    return;
+  }
+
   if (trimmed === "exit") {
     process.exit(0);
   }
@@ -157,11 +240,17 @@ async function main() {
   rl.prompt();
 
   rl.on("line", async (line) => {
+    rl.pause();
     try {
-      await handleCommand(line);
+      await handleCommand(line, rl);
     } catch (error) {
-      logger.error(error.message);
+      if (error.response && error.response.data) {
+        logger.error(`API Error: ${JSON.stringify(error.response.data)}`);
+      } else {
+        logger.error(error.message);
+      }
     } finally {
+      rl.resume();
       rl.prompt();
     }
   });

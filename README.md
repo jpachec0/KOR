@@ -39,7 +39,7 @@ vscode-extension/
 
 ## Requisitos
 
-- Node.js 18.17+ 
+- Node.js 18.17+
 - Chave de API do provider escolhido
 
 ## Instalacao
@@ -133,7 +133,7 @@ Por padrao ele sobe em `http://localhost:3000`.
 ## Fluxo de trabalho
 
 1. O sistema garante a estrutura de runtime em `.ai-agent/`.
-2. Cada `ask` indexa o projeto, escolhe arquivos relevantes por heuristica e relê os arquivos do disco.
+2. Cada `ask` indexa o projeto, escolhe arquivos relevantes por heuristica e rele os arquivos do disco.
 3. O prompt inclui:
    - resumo do projeto
    - resumo do historico longo
@@ -178,3 +178,5 @@ Cada chat fica em `.ai-agent/chats/{chatId}/` com:
 - O projeto esta pronto para uso, faltando apenas configurar a chave de API
 - A CLI continua funcionando do mesmo jeito; a extensao agora consome o core diretamente, sem depender de backend HTTP
 - O servidor em `server/` e opcional e reutiliza o mesmo facade do core
+
+KOR

@@ -11,13 +11,23 @@
     pendingDiffPreview: [],
     pendingCount: 0,
     editorContext: {},
-    draft: ""
+    draft: "",
+    activeTab: "chat", // "chat", "setup", "settings"
+    config: {
+      provider: "openrouter",
+      apiKey: "",
+      model: "",
+      maxTokens: 2000,
+      temperature: 0.2
+    },
+    models: []
   };
 
   const app = document.getElementById("app");
 
   function escapeHtml(value) {
-    return value
+    if (value === undefined || value === null) return "";
+    return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
@@ -97,8 +107,89 @@
     const busyLine = state.busy ? `<div class="busy-line">${escapeHtml(state.busyLabel || "IA pensando...")}</div>` : "";
     const errorLine = state.error ? `<div class="error-line">${escapeHtml(state.error)}</div>` : "";
 
+    // Tabs content
+    const chatContent = `
+      <section class="chat-strip">
+        ${chatItems}
+      </section>
+      <section class="context-bar">
+        ${contextFile}
+        ${selectionChip}
+      </section>
+      ${pendingPanel}
+      <main class="messages">
+        ${messageItems}
+      </main>
+      <footer class="composer">
+        ${busyLine}
+        ${errorLine}
+        <div class="composer-box">
+          <textarea id="promptInput" placeholder="Pergunte sobre o projeto, o arquivo atual ou a selecao..." ${
+            state.busy || !state.connected ? "disabled" : ""
+          }>${escapeHtml(state.draft)}</textarea>
+          <button class="send-button" data-action="send-prompt" ${state.busy || !state.connected ? "disabled" : ""}>Send</button>
+        </div>
+      </footer>
+    `;
+
+    const modelOptions = state.models.map(m => 
+      `<option value="${escapeHtml(m.id)}" ${state.config.model === m.id ? 'selected' : ''}>${escapeHtml(m.name)}</option>`
+    ).join("");
+
+    const hasModels = state.models && state.models.length > 0;
+
+    const setupContent = `
+      <div style="padding: 16px; overflow-y: auto;">
+        ${errorLine}
+        ${busyLine}
+        <h2>Setup do Provedor</h2>
+        <div class="form-group">
+          <label>Provedor</label>
+          <select id="configProvider">
+            <option value="openrouter" ${state.config.provider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+            <option value="openai" ${state.config.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+            <option value="huggingface" ${state.config.provider === 'huggingface' ? 'selected' : ''}>HuggingFace</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="configApiKey" value="${escapeHtml(state.config.apiKey)}" placeholder="sk-..." />
+        </div>
+        <div class="form-actions" style="margin-bottom: 20px;">
+          <button class="ghost-button" data-action="fetch-models">Buscar Modelos</button>
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <select id="configModel" ${!hasModels && !state.config.model ? 'disabled' : ''}>
+            ${modelOptions || `<option value="${escapeHtml(state.config.model)}">${escapeHtml(state.config.model || 'Nenhum modelo carregado')}</option>`}
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="primary-button" data-action="save-setup" ${!hasModels && !state.config.model ? 'disabled' : ''}>Salvar Setup</button>
+        </div>
+      </div>
+    `;
+
+    const settingsContent = `
+      <div style="padding: 16px; overflow-y: auto;">
+        ${errorLine}
+        <h2>Configurações Avançadas</h2>
+        <div class="form-group">
+          <label>Max Tokens</label>
+          <input type="number" id="configMaxTokens" value="${escapeHtml(state.config.maxTokens)}" />
+        </div>
+        <div class="form-group">
+          <label>Temperature</label>
+          <input type="number" step="0.1" id="configTemperature" value="${escapeHtml(state.config.temperature)}" />
+        </div>
+        <div class="form-actions">
+          <button class="primary-button" data-action="save-settings">Salvar Configurações</button>
+        </div>
+      </div>
+    `;
+
     app.innerHTML = `
-      <div class="shell">
+      <div class="shell" style="grid-template-rows: auto auto 1fr;">
         <header class="topbar">
           <div class="brand-block">
             <div class="brand-mark">K</div>
@@ -113,31 +204,21 @@
           </div>
         </header>
 
-        <section class="chat-strip">
-          ${chatItems}
-        </section>
+        <div class="tabs">
+          <button class="tab ${state.activeTab === 'chat' ? 'active' : ''}" data-action="switch-tab" data-tab="chat">Chat</button>
+          <button class="tab ${state.activeTab === 'setup' ? 'active' : ''}" data-action="switch-tab" data-tab="setup">Setup</button>
+          <button class="tab ${state.activeTab === 'settings' ? 'active' : ''}" data-action="switch-tab" data-tab="settings">Configurações</button>
+        </div>
 
-        <section class="context-bar">
-          ${contextFile}
-          ${selectionChip}
-        </section>
-
-        ${pendingPanel}
-
-        <main class="messages">
-          ${messageItems}
-        </main>
-
-        <footer class="composer">
-          ${busyLine}
-          ${errorLine}
-          <div class="composer-box">
-            <textarea id="promptInput" placeholder="Pergunte sobre o projeto, o arquivo atual ou a selecao..." ${
-              state.busy || !state.connected ? "disabled" : ""
-            }>${escapeHtml(state.draft)}</textarea>
-            <button class="send-button" data-action="send-prompt" ${state.busy || !state.connected ? "disabled" : ""}>Send</button>
-          </div>
-        </footer>
+        <div class="tab-content ${state.activeTab === 'chat' ? 'active' : ''}" style="${state.activeTab === 'chat' ? 'display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 10px;' : 'display: none;'}">
+          ${chatContent}
+        </div>
+        <div class="tab-content ${state.activeTab === 'setup' ? 'active' : ''}" style="${state.activeTab === 'setup' ? 'display: block;' : 'display: none;'}">
+          ${setupContent}
+        </div>
+        <div class="tab-content ${state.activeTab === 'settings' ? 'active' : ''}" style="${state.activeTab === 'settings' ? 'display: block;' : 'display: none;'}">
+          ${settingsContent}
+        </div>
       </div>
     `;
 
@@ -208,6 +289,33 @@
       state.error = message.message;
       render();
     }
+
+    if (message.type === "aiConfig") {
+      const oldProvider = state.config.provider;
+      state.config = { ...state.config, ...message.config };
+      render();
+      
+      // Auto-fetch models on load if we have provider and apiKey but no models
+      if (state.config.provider && state.config.apiKey && state.models.length === 0) {
+        vscode.postMessage({
+          type: "fetchModels",
+          provider: state.config.provider,
+          apiKey: state.config.apiKey
+        });
+      }
+    }
+
+    if (message.type === "modelsLoaded") {
+      state.models = message.models;
+      // Pre-select first free model if exists
+      const freeModel = state.models.find(m => m.isFree);
+      if (freeModel && !state.config.model) {
+        state.config.model = freeModel.id;
+      } else if (state.models.length > 0 && !state.config.model) {
+        state.config.model = state.models[0].id;
+      }
+      render();
+    }
   });
 
   document.addEventListener("click", (event) => {
@@ -225,6 +333,7 @@
 
     if (action === "refresh") {
       vscode.postMessage({ type: "refresh" });
+      vscode.postMessage({ type: "getAiConfig" });
       return;
     }
 
@@ -249,8 +358,71 @@
         chatId: target.getAttribute("data-chat-id")
       });
     }
+
+    if (action === "switch-tab") {
+      state.activeTab = target.getAttribute("data-tab");
+      render();
+    }
+
+    if (action === "fetch-models") {
+      const provider = document.getElementById("configProvider").value;
+      const apiKey = document.getElementById("configApiKey").value;
+      
+      state.config.provider = provider;
+      state.config.apiKey = apiKey;
+
+      if (!provider || !apiKey) {
+        state.error = "Preencha Provedor e API Key para buscar modelos.";
+        render();
+        return;
+      }
+
+      state.error = "";
+      vscode.postMessage({
+        type: "fetchModels",
+        provider,
+        apiKey
+      });
+    }
+
+    if (action === "save-setup") {
+      const provider = document.getElementById("configProvider").value;
+      const apiKey = document.getElementById("configApiKey").value;
+      const model = document.getElementById("configModel").value;
+
+      state.config.provider = provider;
+      state.config.apiKey = apiKey;
+      state.config.model = model;
+
+      vscode.postMessage({
+        type: "saveAiConfig",
+        config: { provider, apiKey, model }
+      });
+    }
+
+    if (action === "save-settings") {
+      const maxTokens = parseInt(document.getElementById("configMaxTokens").value, 10);
+      const temperature = parseFloat(document.getElementById("configTemperature").value);
+
+      state.config.maxTokens = maxTokens;
+      state.config.temperature = temperature;
+
+      vscode.postMessage({
+        type: "saveAiConfig",
+        config: { maxTokens, temperature }
+      });
+    }
+  });
+
+  document.addEventListener("change", (event) => {
+    if (event.target.id === "configProvider") {
+      state.config.provider = event.target.value;
+      state.models = []; // Clear models when provider changes
+      render();
+    }
   });
 
   render();
   vscode.postMessage({ type: "ready" });
+  vscode.postMessage({ type: "getAiConfig" });
 }());

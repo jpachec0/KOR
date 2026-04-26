@@ -2,8 +2,13 @@ const axios = require("axios");
 const { buildJsonResponseFormat } = require("../responseFormat");
 
 async function requestOpenRouterCompletion(config, prompt) {
+  let endpoint = config.baseUrl || "https://openrouter.ai/api/v1/chat/completions";
+  if (config.baseUrl && !config.baseUrl.endsWith("/chat/completions")) {
+    endpoint = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  }
+
   const response = await axios.post(
-    config.baseUrl || "https://openrouter.ai/api/v1/chat/completions",
+    endpoint,
     {
       model: config.model,
       temperature: config.temperature,
@@ -14,7 +19,6 @@ async function requestOpenRouterCompletion(config, prompt) {
           content: prompt
         }
       ],
-      response_format: buildJsonResponseFormat(),
       plugins: [
         { id: "response-healing" }
       ]

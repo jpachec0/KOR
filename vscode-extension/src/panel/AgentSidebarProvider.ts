@@ -9,7 +9,10 @@ type WebviewIncomingMessage =
   | { type: "newChat"; name?: string }
   | { type: "switchChat"; chatId: string }
   | { type: "sendPrompt"; question: string }
-  | { type: "applyChanges" };
+  | { type: "applyChanges" }
+  | { type: "getAiConfig" }
+  | { type: "fetchModels"; provider: string; apiKey: string }
+  | { type: "saveAiConfig"; config: any };
 
 interface RenderedMessage {
   id: string;
@@ -28,7 +31,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly coreClient: CoreClient
-  ) {}
+  ) { }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
     this.view = webviewView;
@@ -68,6 +71,13 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
 
     this.state = await this.coreClient.getState(workspacePath);
     this.postState();
+
+    try {
+      const config = await this.coreClient.getAiConfig(workspacePath);
+      this.postMessage({ type: "aiConfig", config });
+    } catch (error) {
+      // Ignore if ai.json doesn't exist yet
+    }
   }
 
   async createChat(name?: string): Promise<void> {
@@ -317,6 +327,39 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
         break;
       case "applyChanges":
         await this.applyPendingChanges();
+        break;
+      case "getAiConfig":
+        try {
+          const workspacePath = this.getWorkspaceRootPathOrThrow();
+          const config = await this.coreClient.getAiConfig(workspacePath);
+          this.postMessage({ type: "aiConfig", config });
+        } catch (error) {
+          this.showError(error);
+        }
+        break;
+      case "fetchModels":
+        try {
+          const workspacePath = this.getWorkspaceRootPathOrThrow();
+          this.setBusy(true, "Buscando modelos...");
+          const models = await this.coreClient.fetchModels(workspacePath, message.provider, message.apiKey);
+          this.postMessage({ type: "modelsLoaded", models });
+        } catch (error) {
+          this.showError(error);
+        } finally {
+          this.setBusy(false);
+        }
+        break;
+      case "saveAiConfig":
+        try {
+          const workspacePath = this.getWorkspaceRootPathOrThrow();
+          await this.coreClient.saveAiConfig(workspacePath, message.config);
+          void vscode.window.showInformationMessage("Configurações de IA salvas com sucesso.");
+          // Refresh config to UI
+          const updatedConfig = await this.coreClient.getAiConfig(workspacePath);
+          this.postMessage({ type: "aiConfig", config: updatedConfig });
+        } catch (error) {
+          this.showError(error);
+        }
         break;
       default:
         break;

@@ -15,7 +15,8 @@ function createRuntimeContext(rootDir = process.cwd()) {
     sessionFile: path.join(runtimeDir, "session.json"),
     cacheFile: path.join(memoryDir, "response-cache.json"),
     indexFile: path.join(indexDir, "project-index.json"),
-    aiConfigFile: path.join(normalizedRootDir, "config", "ai.json")
+    aiConfigFile: path.join(normalizedRootDir, "config", "ai.json"),
+    credentialsFile: path.join(runtimeDir, "credentials.json")
   };
 }
 

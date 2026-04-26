@@ -1,8 +1,6 @@
 {
   "provider": "openrouter",
-  "apiKey": "COLOCAR_AQUI",
-  "model": "mistralai/mistral-7b-instruct",
-  "baseUrl": "",
+  "model": "mistralai/ministral-3b-2512",
   "maxTokens": 2000,
   "temperature": 0.2
 }

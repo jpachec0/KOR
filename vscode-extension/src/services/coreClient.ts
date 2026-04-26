@@ -49,6 +49,10 @@ interface KorCoreFacade {
   useChat(chatId: string): Promise<ChatMeta>;
   askAgent(chatId: string, question: string, options?: { editorContext?: EditorContextPayload }): Promise<unknown>;
   clearPendingChanges(chatId: string): Promise<SidebarState>;
+  getAiConfig(): Promise<any>;
+  saveAiConfig(config: any): Promise<any>;
+  fetchModels(provider: string, apiKey: string): Promise<any>;
+  getApiKey(provider: string): Promise<string>;
 }
 
 const coreModulePath = path.resolve(__dirname, "../../../core");
@@ -102,5 +106,21 @@ export class CoreClient {
 
   async clearPending(workspacePath: string, chatId: string): Promise<SidebarState> {
     return this.getCore(workspacePath).clearPendingChanges(chatId);
+  }
+
+  async getAiConfig(workspacePath: string): Promise<any> {
+    return this.getCore(workspacePath).getAiConfig();
+  }
+
+  async saveAiConfig(workspacePath: string, config: any): Promise<any> {
+    return this.getCore(workspacePath).saveAiConfig(config);
+  }
+
+  async fetchModels(workspacePath: string, provider: string, apiKey: string): Promise<any> {
+    return this.getCore(workspacePath).fetchModels(provider, apiKey);
+  }
+
+  async getApiKey(workspacePath: string, provider: string): Promise<string> {
+    return this.getCore(workspacePath).getApiKey(provider);
   }
 }

@@ -169,9 +169,10 @@ async function startServer() {
   });
 
   app.use((error, _req, res, _next) => {
-    logger.error(error.message);
+    const errorDetail = error.response?.data ? JSON.stringify(error.response.data) : null;
+    logger.error(errorDetail ? `API Error: ${errorDetail}` : error.message);
     res.status(500).json({
-      error: error.message || "Erro interno do servidor."
+      error: errorDetail || error.message || "Erro interno do servidor."
     });
   });
 
