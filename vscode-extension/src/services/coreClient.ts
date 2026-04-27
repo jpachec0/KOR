@@ -56,7 +56,7 @@ interface KorCoreFacade {
   getApiKey(provider: string): Promise<string>;
 }
 
-const coreModulePath = path.resolve(__dirname, "../../../core");
+const coreModulePath = path.resolve(__dirname, "../../core");
 const { createKorCore } = require(coreModulePath) as {
   createKorCore: (rootDir: string) => KorCoreFacade;
 };
