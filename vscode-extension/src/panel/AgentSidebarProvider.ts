@@ -425,6 +425,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
   private getHtml(webview: vscode.Webview): string {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "webview", "main.js"));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "webview", "styles.css"));
+    const logoUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "resources", "KOR.png"));
     const nonce = String(Date.now());
 
     return `<!DOCTYPE html>
@@ -440,6 +441,7 @@ export class AgentSidebarProvider implements vscode.WebviewViewProvider {
           <div id="app"></div>
           <script nonce="${nonce}">
             window.__KOR_INITIAL_THEME__ = "${vscode.window.activeColorTheme.kind}";
+            window.__KOR_LOGO_URI__ = "${logoUri}";
           </script>
           <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>

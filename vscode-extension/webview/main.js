@@ -219,7 +219,7 @@
       <div class="shell">
         <header class="topbar">
           <div class="brand-block">
-            <div class="brand-logo-space">K</div>
+            <div class="brand-logo-space"><img src="${window.__KOR_LOGO_URI__ || ''}" alt="KOR" class="brand-logo-img" /></div>
             <div>
               <div class="brand-title">KOR Agent</div>
               <div class="${connectionClass}">${state.connected ? "Conectado" : "Desconectado"}</div>

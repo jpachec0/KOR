@@ -3,6 +3,7 @@
   "displayName": "KOR Local Agent",
   "description": "Interface moderna do agente local KOR no Visual Studio Code.",
   "version": "1.0.0",
+  "icon": "resources/KOR.png",
   "publisher": "jpachec0",
   "repository": {
     "type": "git",
@@ -27,7 +28,7 @@
         {
           "id": "korAgent",
           "title": "KOR AI",
-          "icon": "resources/k.svg"
+          "icon": "resources/KOR.svg"
         }
       ]
     },
