@@ -2,7 +2,7 @@
   "name": "kor-local-agent-vscode",
   "displayName": "KOR Local Agent",
   "description": "Interface moderna do agente local KOR no Visual Studio Code.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icon": "resources/KOR.png",
   "publisher": "jpachec0",
   "repository": {
