@@ -30,11 +30,10 @@ Você pode instalar o KOR globalmente no seu computador para acessá-lo de qualq
 
 ## Como Usar (Extensão VS Code)
 
-1. Rode `npm run watch` no terminal dentro da pasta `vscode-extension` (ou compile com F5 usando as tarefas `.vscode`).
-2. Abra a extensão no seu editor de código.
-3. Se for a primeira vez, clique na engrenagem (Settings) na aba lateral para configurar seu provedor e sua API Key.
-4. Volte para a aba **Home**, crie um novo Chat e comece a conversar com o Agente.
-5. Se o Agente propuser mudanças de código ou execução de comandos, você poderá revisá-las no painel. Clique em **Apply** para autorizar.
+1. Baixe a extensão no VS Code (https://marketplace.visualstudio.com/items?itemName=jpachec0.kor-local-agent-vscode)
+2. Se for a primeira vez, clique na engrenagem (Settings) na aba lateral para configurar seu provedor e sua API Key.
+3. Volte para a aba **Home**, crie um novo Chat e comece a conversar com o Agente.
+4. Se o Agente propuser mudanças de código ou execução de comandos, você poderá revisá-las no painel. Clique em **Apply** para autorizar.
 
 ## Arquitetura
 
